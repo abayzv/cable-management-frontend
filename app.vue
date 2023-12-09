@@ -128,7 +128,8 @@ export default defineComponent({
        if (!isReady) return;
 
         const mapInstance = map.value.map;
-        pathOptions.value.forEach((item, index) => {
+
+        const createPolyLine = (item, index) => {
           const polyline = new google.maps.Polyline(item);
           const path = polyline.getPath();
           const infoWindow = new google.maps.InfoWindow({
@@ -175,34 +176,18 @@ export default defineComponent({
           google.maps.event.addListener(polyline, "dragend", (event) => {
             console.log(event);
           });
-          
+        }
+
+        pathOptions.value.forEach((item, index) => {
+          createPolyLine(item, index);
         });
 
         mapInstance.addListener("click", (event) => {
           createMapPoint(event);
+          createPolyLine(pathOptions.value[pathOptions.value.length - 1], pathOptions.value.length - 1);
         });
 
       }, { immediate: true, deep: true})
-
-      // watch pathOptions
-      watch(() => pathOptions.value, (newPathOptions, oldPathOptions) => {
-        if (newPathOptions.length === oldPathOptions.length) return;
-        if (newPathOptions.length > oldPathOptions.length) {
-          const newPolyline = new google.maps.Polyline(newPathOptions[newPathOptions.length - 1]);
-          const newPath = newPolyline.getPath();
-          newPath.addListener('insert_at', function(vertex) {
-            updatePathOptions(this, newPathOptions.length - 1)
-          });
-
-          newPath.addListener('set_at', function(vertex) {
-            updatePathOptions(this, newPathOptions.length - 1)
-          });
-
-          newPath.addListener('remove_at', function(vertex) {
-            updatePathOptions(this, newPathOptions.length - 1)
-          });
-        }
-      }, { deep: true })
     })
 
     return { center, pathOptions, updatePathOptions, createMapPoint, infoRef, openedMarkerID, map, polylineRef };
