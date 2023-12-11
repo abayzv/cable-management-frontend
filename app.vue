@@ -1,13 +1,18 @@
 <template>
-  <div class="grid grid-cols-2">
-    <GoogleMap
+  <div class="flex">
+    <div class="w-4/5 relative">
+      <GoogleMap
       api-key="AIzaSyBHiGcY7tohl9P47ZOYtY5gH4IKdwjndU0"
-      style="width: 100%; height: 700px"
+      style="width: 100%; height: 100vh"
       :center="center"
       :zoom="4"
       ref="map"
     />
-    <div class="m-4">
+    <UButton @click="isCreatable = !isCreatable" size="xl" color="black" class="absolute -top-3 right-10 m-5">
+      {{ isCreatable ? 'Disable' : 'Enable' }} Create
+    </UButton>
+    </div>
+    <div class="w-1/5 overflow-y-auto max-h-screen p-5">
       <pre>
         {{ pathOptions }}
       </pre>
@@ -32,7 +37,7 @@ export default defineComponent({
       path : []
     })
 
-    const isCreatable = ref(true);
+    const isCreatable = ref(false);
 
     const openedMarkerID = ref(1);
 
@@ -42,8 +47,8 @@ export default defineComponent({
     const pathOptions = ref([
       {
         path: [
-          { lat: -6.1751, lng: 106.865 }, // Jakarta
-          { lat: -7.7956, lng: 110.3695 }, // Yogyakarta
+          { lat: -6.1751, lng: 106.865, name: 'jakarta' }, // Jakarta
+          { lat: -7.7956, lng: 110.3695, name: 'jogjakarta' }, // Yogyakarta
         ],
         geodesic: true,
         strokeColor: "#FF0000",
@@ -53,8 +58,8 @@ export default defineComponent({
       },
       {
         path: [
-          { lat: -8.3405, lng: 115.092 }, // Bali
-          { lat: -0.5897, lng: 117.0918 }, // Kalimantan
+          { lat: -8.3405, lng: 115.092, name:'bali' }, // Bali
+          { lat: -0.5897, lng: 117.0918, name:'kalimantan' }, // Kalimantan
         ],
         geodesic: true,
         strokeColor: "#0000FF",
@@ -132,28 +137,34 @@ export default defineComponent({
         const createPolyLine = (item, index) => {
           const polyline = new google.maps.Polyline(item);
           const path = polyline.getPath();
-          const infoWindow = new google.maps.InfoWindow({
-              content: "<p class='text-black'>test</p>",
+          const infoWindowStart = new google.maps.InfoWindow({
+              content: `<p class='text-black'>${item.path[0].name}</p>`,
+            });
+
+          const infoWindowEnd = new google.maps.InfoWindow({
+              content: `<p class='text-black'>${item.path[item.path.length - 1].name}</p>`,
             });
 
           const markerStart = new google.maps.Marker({
             position: path.getAt(0),
             map: mapInstance,
-            title: "Start Point",
+            title: item.path[0].name,
           });
 
           const markerEnd = new google.maps.Marker({
             position: path.getAt(path.getLength() - 1),
             map: mapInstance,
-            title: "End Point",
+            title: item.path[item.path.length - 1].name,
           });
 
           markerStart.addListener("click", () => {
-            infoWindow.open(mapInstance, markerStart);
+            infoWindowStart.open(mapInstance, markerStart);
+            infoWindowEnd.close();
           });
 
           markerEnd.addListener("click", () => {
-            infoWindow.open(mapInstance, markerEnd);
+            infoWindowEnd.open(mapInstance, markerEnd);
+            infoWindowStart.close();
           });
           
 
@@ -190,7 +201,7 @@ export default defineComponent({
       }, { immediate: true, deep: true})
     })
 
-    return { center, pathOptions, updatePathOptions, createMapPoint, infoRef, openedMarkerID, map, polylineRef };
+    return { center, pathOptions, updatePathOptions, createMapPoint, infoRef, openedMarkerID, map, polylineRef, isCreatable };
   },
 });
 </script>
